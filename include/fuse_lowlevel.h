@@ -440,7 +440,10 @@ struct fuse_lowlevel_ops {
 	 * @param off offset to write to
 	 * @param fi file information
 	 */
-	void (*write) (fuse_req_t req, fuse_ino_t ino, const char *buf,
+	void (*write) (fuse_req_t req, fuse_ino_t ino, char *buf,
+		       size_t size, off_t off, struct fuse_file_info *fi);
+
+	void (*write_read) (fuse_req_t req, fuse_ino_t ino, char *buf,
 		       size_t size, off_t off, struct fuse_file_info *fi);
 
 	/**
@@ -1386,4 +1389,29 @@ void fuse_chan_destroy(struct fuse_chan *ch);
 }
 #endif
 
+struct fuse_session {
+	struct fuse_session_ops op;
+
+	void *data;
+
+	volatile int exited;
+
+	struct fuse_chan *ch;
+};
+
+struct fuse_chan {
+	struct fuse_chan_ops op;
+
+	struct fuse_session *se;
+
+	int fd;
+
+	size_t bufsize;
+
+	void *data;
+
+	int compat;
+};
+
 #endif /* _FUSE_LOWLEVEL_H_ */
+

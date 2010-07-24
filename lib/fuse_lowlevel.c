@@ -384,7 +384,7 @@ int fuse_reply_write(fuse_req_t req, size_t count)
 
 int fuse_reply_buf(fuse_req_t req, const char *buf, size_t size)
 {
-	return send_reply_ok(req, buf, size);
+  return send_reply_ok(req, buf, size);
 }
 
 int fuse_reply_statfs(fuse_req_t req, const struct statvfs *stbuf)
@@ -622,6 +622,23 @@ static void do_read(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 		fi.fh_old = fi.fh;
 		req->f->op.read(req, nodeid, arg->size, arg->offset, &fi);
 	} else
+		fuse_reply_err(req, ENOSYS);
+}
+
+static void do_write_read(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
+{
+	struct fuse_write_in *arg = (struct fuse_write_in *) inarg;
+	struct fuse_file_info fi;
+
+	memset(&fi, 0, sizeof(fi));
+	fi.fh = arg->fh;
+	fi.fh_old = fi.fh;
+	fi.writepage = arg->write_flags & 1;
+
+	if (req->f->op.write)
+		req->f->op.write_read(req, nodeid, PARAM(arg), arg->size,
+				 arg->offset, &fi);
+	else
 		fuse_reply_err(req, ENOSYS);
 }
 
@@ -1116,6 +1133,7 @@ static struct {
 	[FUSE_INTERRUPT]   = { do_interrupt,   "INTERRUPT"   },
 	[FUSE_BMAP]	   = { do_bmap,	       "BMAP"	     },
 	[FUSE_DESTROY]	   = { do_destroy,     "DESTROY"     },
+	[FUSE_WRITE_READ]  = { do_write_read,  "WRITE_READ"  },
 };
 
 #define FUSE_MAXOP (sizeof(fuse_ll_ops) / sizeof(fuse_ll_ops[0]))
@@ -1163,7 +1181,7 @@ static void fuse_ll_process(void *data, const char *buf, size_t len,
 		fuse_reply_err(req, EIO);
 	else if (f->allow_root && in->uid != f->owner && in->uid != 0 &&
 		 in->opcode != FUSE_INIT && in->opcode != FUSE_READ &&
-		 in->opcode != FUSE_WRITE && in->opcode != FUSE_FSYNC &&
+		 in->opcode != FUSE_WRITE && in->opcode != FUSE_WRITE_READ && in->opcode != FUSE_FSYNC &&
 		 in->opcode != FUSE_RELEASE && in->opcode != FUSE_READDIR &&
 		 in->opcode != FUSE_FSYNCDIR && in->opcode != FUSE_RELEASEDIR) {
 		fuse_reply_err(req, EACCES);

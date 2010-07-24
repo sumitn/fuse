@@ -333,26 +333,28 @@ static int process_one(struct fuse_opt_context *ctx, const char *arg)
 
 static int opt_parse(struct fuse_opt_context *ctx)
 {
-	if (ctx->argc) {
-		if (add_arg(ctx, ctx->argv[0]) == -1)
-			return -1;
-	}
-
-	for (ctx->argctr = 1; ctx->argctr < ctx->argc; ctx->argctr++)
-		if (process_one(ctx, ctx->argv[ctx->argctr]) == -1)
-			return -1;
-
-	if (ctx->opts) {
-		if (fuse_opt_insert_arg(&ctx->outargs, 1, "-o") == -1 ||
-		    fuse_opt_insert_arg(&ctx->outargs, 2, ctx->opts) == -1)
-			return -1;
-	}
-	if (ctx->nonopt && ctx->nonopt == ctx->outargs.argc) {
-		free(ctx->outargs.argv[ctx->outargs.argc - 1]);
-		ctx->outargs.argv[--ctx->outargs.argc] = NULL;
-	}
-
-	return 0;
+   if (ctx->argc) {
+      if (add_arg(ctx, ctx->argv[0]) == -1)
+	 return -1;
+   }
+   
+   for (ctx->argctr = 1; ctx->argctr < ctx->argc; ctx->argctr++)
+   {
+      if (process_one(ctx, ctx->argv[ctx->argctr]) == -1)
+	 return -1;
+   }
+   
+   if (ctx->opts) {
+      if (fuse_opt_insert_arg(&ctx->outargs, 1, "-o") == -1 ||
+	  fuse_opt_insert_arg(&ctx->outargs, 2, ctx->opts) == -1)
+	 return -1;
+   }
+   if (ctx->nonopt && ctx->nonopt == ctx->outargs.argc) {
+      free(ctx->outargs.argv[ctx->outargs.argc - 1]);
+      ctx->outargs.argv[--ctx->outargs.argc] = NULL;
+   }
+   
+   return 0;
 }
 
 int fuse_opt_parse(struct fuse_args *args, void *data,

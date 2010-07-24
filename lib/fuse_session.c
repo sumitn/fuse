@@ -17,29 +17,6 @@
 #include <assert.h>
 #include <errno.h>
 
-struct fuse_session {
-	struct fuse_session_ops op;
-
-	void *data;
-
-	volatile int exited;
-
-	struct fuse_chan *ch;
-};
-
-struct fuse_chan {
-	struct fuse_chan_ops op;
-
-	struct fuse_session *se;
-
-	int fd;
-
-	size_t bufsize;
-
-	void *data;
-
-	int compat;
-};
 
 struct fuse_session *fuse_session_new(struct fuse_session_ops *op, void *data)
 {
